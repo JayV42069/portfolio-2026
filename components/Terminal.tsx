@@ -8,7 +8,7 @@ const COMMANDS: Record<string, string> = {
   skills: "Frontend: Next.js 15, TypeScript, Tailwind, Zustand. Systems: Godot 4, Python, AI Agents.",
   stack: "Current Environment: Bun, Turborepo, Vercel, Windsurf Agentic Loops.",
   experience: "Focus: High-performance UI development and modular physics simulation systems.",
-  contact: "Email: [Your Email] | GitHub: [Your GitHub Link]",
+  contact: "Email: jaydeevntr@gmail.com | GitHub: https://github.com/JayV42069",
 };
 
 export default function Terminal() {
