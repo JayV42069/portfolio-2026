@@ -1,4 +1,7 @@
 import { Mail, Zap, Cpu, GitBranch, Rocket } from "lucide-react";
+import TradingChart from "@/components/TradingChart";
+import Terminal from "@/components/Terminal";
+import ModuleGrid from "@/components/ModuleGrid";
 
 export default function Home() {
   return (
@@ -12,6 +15,25 @@ export default function Home() {
           <p className="text-lg md:text-xl text-zinc-400 max-w-3xl leading-relaxed">
             Architecting high-performance UIs and real-time systems through AI-accelerated workflows.
           </p>
+          <div className="my-12">
+            <TradingChart />
+          </div>
+        </section>
+
+        <section className="py-20">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold mb-4 italic">SYSTEM_OVERRIDE</h2>
+            <p className="text-zinc-500">Query the engineer directly via the secure console.</p>
+          </div>
+          <Terminal />
+        </section>
+
+        <section className="py-20 border-t border-white/5">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold mb-4 italic uppercase">Physics_Lab</h2>
+            <p className="text-zinc-500">Real-time modular state management and mass calculation engine.</p>
+          </div>
+          <ModuleGrid />
         </section>
 
         {/* Technical Wins */}
