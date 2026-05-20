@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { Terminal as TerminalIcon, ChevronRight } from "lucide-react";
 
 const COMMANDS: Record<string, string> = {
-  help: "Available commands: skills, stack, experience, contact, clear",
-  skills: "Frontend: Next.js 15, TypeScript, Tailwind, Zustand. Systems: Godot 4, Python, AI Agents.",
-  stack: "Current Environment: Bun, Turborepo, Vercel, Windsurf Agentic Loops.",
-  experience: "Focus: High-performance UI development and modular physics simulation systems.",
+  help: "Available commands: skills, stack, experience, projects, contact, clear",
+  skills: "Frontend: Next.js (App Router), TypeScript, Tailwind CSS, State Propagation. Systems: Godot 4 (3D GDScript), Python, Order Flow Logic.",
+  stack: "Current Local Dev Environment: Bun runtime, Turbopack, Git, Windows 11 Power Shell.",
+  experience: "System Integrator & Frontend Developer. Specialized in modular state management and building real-time interface tools for complex workflows.",
+  projects: "1. DriveThrive: A 3D vehicle physics engine built in Godot 4 featuring modular component durability and structural grid mechanics. 2. DeepchartsPro 3.0: Spearheaded surgical architecture migration to version 3.0 utilizing the Strangler Fig Pattern to smoothly phase out legacy dependencies.",
   contact: "Email: jaydeevntr@gmail.com | GitHub: https://github.com/JayV42069",
 };
 
