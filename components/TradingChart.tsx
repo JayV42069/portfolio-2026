@@ -9,33 +9,35 @@ interface PriceData {
 }
 
 export default function TradingChart() {
+  const maxDataPoints = 40;
+
+  // 1. Initialize & Simulate High-Frequency Price Feed
   const [data, setData] = useState<PriceData[]>([]);
   const [isPlaying, setIsPlaying] = useState(true);
   const [leverage, setLeverage] = useState(20);
   const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
-  const maxDataPoints = 40;
 
-  // 1. Initialize & Simulate High-Frequency Price Feed
+  const currentPriceRef = useRef<number>(65000);
+
   useEffect(() => {
-    // Generate initial baseline data
+    // Generate initial baseline data on client mount to prevent SSR hydration mismatch
     const initialData: PriceData[] = [];
     let basePrice = 65000;
+    const now = Date.now();
     for (let i = maxDataPoints; i > 0; i--) {
       basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
+      initialData.push({ time: now - i * 1000, price: basePrice });
     }
     currentPriceRef.current = basePrice;
     setData(initialData);
-  }, []);
+  }, [maxDataPoints]);
 
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
       setData((prev) => {
+        if (prev.length === 0) return prev;
         // High-frequency tick simulation
         const volatility = 120; 
         const change = (Math.random() - 0.49) * volatility; // Slight upward bias
@@ -49,23 +51,19 @@ export default function TradingChart() {
     }, 400); // 400ms High-Frequency Ticks
 
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, maxDataPoints]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
+  // 2. Real-Time Risk & PnL Calculation (derived state)
+  const pnl = React.useMemo(() => {
+    if (!position || data.length === 0) return 0;
     const currentPrice = data[data.length - 1].price;
     const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
     const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
+    return position.type === "LONG" ? calculatedPnl : -calculatedPnl;
   }, [data, position, leverage]);
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -113,7 +111,9 @@ export default function TradingChart() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label={isPlaying ? "Pause live price feed" : "Resume live price feed"}
+            title={isPlaying ? "Pause live feed" : "Resume live feed"}
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} />}
           </button>
@@ -122,7 +122,9 @@ export default function TradingChart() {
               setPosition(null);
               currentPriceRef.current = 65000;
             }}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label="Reset chart data and close active position"
+            title="Reset chart and position"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             <RefreshCw size={16} />
           </button>
@@ -199,12 +201,14 @@ export default function TradingChart() {
         {/* Risk / Leverage Slider Block */}
         <div className="flex flex-col justify-center bg-zinc-900/50 border border-white/5 rounded-lg p-3">
           <div className="flex justify-between text-zinc-400 mb-2">
-            <span>RISK ENGINE LEVERAGE</span>
+            <label htmlFor="leverage-slider" className="cursor-pointer">RISK ENGINE LEVERAGE</label>
             <span className="text-white font-bold">{leverage}x</span>
           </div>
           <input 
+            id="leverage-slider"
             type="range" min="1" max="100" value={leverage} 
             onChange={(e) => setLeverage(Number(e.target.value))}
+            aria-label="Risk Engine Leverage"
             className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer"
           />
         </div>
