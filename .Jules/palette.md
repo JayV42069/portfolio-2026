@@ -1,0 +1,3 @@
+## 2025-05-18 - Dynamic Slot ARIA Labels and Live Region Feedback
+**Learning:** Interactive grid slot buttons and command inputs without descriptive screen reader labels fail accessible navigation audits. Providing dynamic `aria-label`s reflecting active tool states and slot contents along with `aria-live="polite"` on computed metrics provides immediate context to assistive technology users.
+**Action:** Always add `aria-pressed` to tool selectors, descriptive dynamic `aria-label`s on interactive grid slots, and clear `focus-visible` ring indicators for custom dark-themed interactive components.
