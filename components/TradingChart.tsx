@@ -9,27 +9,22 @@ interface PriceData {
 }
 
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [leverage, setLeverage] = useState(20);
-  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
   const maxDataPoints = 40;
 
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
+  const [data, setData] = useState<PriceData[]>(() => {
     const initialData: PriceData[] = [];
     let basePrice = 65000;
     for (let i = maxDataPoints; i > 0; i--) {
       basePrice += (Math.random() - 0.5) * 150;
       initialData.push({ time: Date.now() - i * 1000, price: basePrice });
     }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
+    return initialData;
+  });
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [leverage, setLeverage] = useState(20);
+  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
+
+  const currentPriceRef = useRef<number>(data.length > 0 ? data[data.length - 1].price : 65000);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -51,21 +46,19 @@ export default function TradingChart() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
+  // 2. Real-Time Risk & PnL Calculation (Derived state during render)
+  const calculatedPnl = React.useMemo(() => {
     if (!position || data.length === 0) {
-      setPnl(0);
-      return;
+      return 0;
     }
     const currentPrice = data[data.length - 1].price;
     const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
-    const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
+    const rawPnl = priceDiffPercentage * leverage * 100;
+    return position.type === "LONG" ? rawPnl : -rawPnl;
   }, [data, position, leverage]);
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -187,9 +180,9 @@ export default function TradingChart() {
         {/* Floating Position Execution Tags */}
         {position && (
           <div className={`absolute top-4 right-4 text-xs font-mono px-3 py-1.5 rounded border ${
-            pnl >= 0 ? "bg-emerald-950/80 text-emerald-400 border-emerald-500/30" : "bg-rose-950/80 text-rose-400 border-rose-500/30"
+            calculatedPnl >= 0 ? "bg-emerald-950/80 text-emerald-400 border-emerald-500/30" : "bg-rose-950/80 text-rose-400 border-rose-500/30"
           }`}>
-            {position.type} @ ${position.entry.toFixed(0)} | PnL: {pnl >= 0 ? "+" : ""}{pnl.toFixed(1)}%
+            {position.type} @ ${position.entry.toFixed(0)} | PnL: {calculatedPnl >= 0 ? "+" : ""}{calculatedPnl.toFixed(1)}%
           </div>
         )}
       </div>

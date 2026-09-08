@@ -37,14 +37,17 @@ export default function Terminal() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm">
+    <section
+      aria-label="System Console Terminal"
+      className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm"
+    >
       {/* Terminal Header */}
       <div className="bg-zinc-900/50 px-4 py-2 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TerminalIcon size={14} className="text-zinc-500" />
+          <TerminalIcon size={14} className="text-zinc-500" aria-hidden="true" />
           <span className="text-zinc-400 text-xs uppercase tracking-widest">System_Console</span>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" aria-hidden="true">
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
@@ -62,15 +65,17 @@ export default function Terminal() {
           </div>
         ))}
         <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+          <ChevronRight size={14} className="text-emerald-500 mr-1" aria-hidden="true" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="System console command input"
+            placeholder="Type a command..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded px-1"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
         </form>
       </div>
-    </div>
+    </section>
   );
 }
