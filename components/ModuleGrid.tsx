@@ -87,11 +87,15 @@ export default function ModuleGrid() {
         <div className="md:col-span-3 grid grid-cols-4 gap-2 bg-black/50 p-4 rounded-xl border border-white/5">
           {grid.map((slot, i) => {
             const activeMod = AVAILABLE_MODULES.find((m) => m.id === slot);
+            const slotLabel = activeMod
+              ? `Slot ${i + 1}: ${activeMod.name} installed. Click to remove or change.`
+              : `Slot ${i + 1}: empty. Click to install active module.`;
             return (
               <button
                 key={i}
                 onClick={() => handleGridClick(i)}
-                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 ${
+                aria-label={slotLabel}
+                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none ${
                   activeMod 
                     ? `bg-emerald-500/10 border-emerald-500/50 ${activeMod.color}` 
                     : "bg-zinc-900/30 border-white/5 hover:border-white/20 text-zinc-800"
