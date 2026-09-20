@@ -9,27 +9,23 @@ interface PriceData {
 }
 
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [leverage, setLeverage] = useState(20);
-  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
   const maxDataPoints = 40;
+  const currentPriceRef = useRef<number>(65000);
 
   // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
+  const [data, setData] = useState<PriceData[]>(() => {
     const initialData: PriceData[] = [];
     let basePrice = 65000;
     for (let i = maxDataPoints; i > 0; i--) {
       basePrice += (Math.random() - 0.5) * 150;
       initialData.push({ time: Date.now() - i * 1000, price: basePrice });
     }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
+    return initialData;
+  });
+
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [leverage, setLeverage] = useState(20);
+  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -39,7 +35,8 @@ export default function TradingChart() {
         // High-frequency tick simulation
         const volatility = 120; 
         const change = (Math.random() - 0.49) * volatility; // Slight upward bias
-        const nextPrice = Math.max(1000, currentPriceRef.current + change);
+        const lastPrice = prev.length > 0 ? prev[prev.length - 1].price : currentPriceRef.current;
+        const nextPrice = Math.max(1000, lastPrice + change);
         currentPriceRef.current = nextPrice;
 
         const newData = [...prev, { time: Date.now(), price: nextPrice }];
@@ -52,20 +49,16 @@ export default function TradingChart() {
   }, [isPlaying]);
 
   // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
-    const currentPrice = data[data.length - 1].price;
+  const currentPrice = data.length > 0 ? data[data.length - 1].price : 65000;
+  const pnl = (() => {
+    if (!position || data.length === 0) return 0;
     const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
     const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
-  }, [data, position, leverage]);
+    return position.type === "LONG" ? calculatedPnl : -calculatedPnl;
+  })();
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -73,7 +66,6 @@ export default function TradingChart() {
   const prices = data.map((d) => d.price);
   const minPrice = Math.min(...prices) * 0.9995;
   const maxPrice = Math.max(...prices) * 1.0005;
-  const currentPrice = prices[prices.length - 1];
   const previousPrice = prices[prices.length - 2] || currentPrice;
   const isPriceUp = currentPrice >= previousPrice;
 
@@ -121,6 +113,15 @@ export default function TradingChart() {
             onClick={() => {
               setPosition(null);
               currentPriceRef.current = 65000;
+              setData(() => {
+                const initialData: PriceData[] = [];
+                let basePrice = 65000;
+                for (let i = maxDataPoints; i > 0; i--) {
+                  basePrice += (Math.random() - 0.5) * 150;
+                  initialData.push({ time: Date.now() - i * 1000, price: basePrice });
+                }
+                return initialData;
+              });
             }}
             className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
           >
