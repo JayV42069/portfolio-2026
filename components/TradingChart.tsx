@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Play, Pause, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PriceData {
@@ -9,27 +9,26 @@ interface PriceData {
 }
 
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
+  const maxDataPoints = 40;
+
+  // Function to generate initial data deterministically or on reset
+  const generateInitialData = () => {
+    const initialData: PriceData[] = [];
+    const basePrice = 65000;
+    // Static initial timestamp & constant spacing to ensure SSR & Client hydration match
+    const baseTime = 1700000000000;
+    for (let i = maxDataPoints; i > 0; i--) {
+      initialData.push({ time: baseTime - i * 1000, price: basePrice });
+    }
+    return initialData;
+  };
+
+  // 1. Initialize & Simulate High-Frequency Price Feed
+  const [data, setData] = useState<PriceData[]>(generateInitialData);
+
   const [isPlaying, setIsPlaying] = useState(true);
   const [leverage, setLeverage] = useState(20);
   const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
-  const maxDataPoints = 40;
-
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
-    const initialData: PriceData[] = [];
-    let basePrice = 65000;
-    for (let i = maxDataPoints; i > 0; i--) {
-      basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
-    }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -37,10 +36,10 @@ export default function TradingChart() {
     const interval = setInterval(() => {
       setData((prev) => {
         // High-frequency tick simulation
+        const lastPrice = prev.length > 0 ? prev[prev.length - 1].price : 65000;
         const volatility = 120; 
         const change = (Math.random() - 0.49) * volatility; // Slight upward bias
-        const nextPrice = Math.max(1000, currentPriceRef.current + change);
-        currentPriceRef.current = nextPrice;
+        const nextPrice = Math.max(1000, lastPrice + change);
 
         const newData = [...prev, { time: Date.now(), price: nextPrice }];
         if (newData.length > maxDataPoints) newData.shift();
@@ -52,20 +51,16 @@ export default function TradingChart() {
   }, [isPlaying]);
 
   // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
+  const pnl = React.useMemo(() => {
+    if (!position || data.length === 0) return 0;
     const currentPrice = data[data.length - 1].price;
     const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
     const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
+    return position.type === "LONG" ? calculatedPnl : -calculatedPnl;
   }, [data, position, leverage]);
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -112,19 +107,23 @@ export default function TradingChart() {
         {/* Real-Time Interaction Desk */}
         <div className="flex items-center gap-3">
           <button 
+            type="button"
+            aria-label={isPlaying ? "Pause price updates" : "Play price updates"}
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+            {isPlaying ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
           </button>
           <button 
+            type="button"
+            aria-label="Reset chart state"
             onClick={() => {
               setPosition(null);
-              currentPriceRef.current = 65000;
+              setData(generateInitialData());
             }}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={16} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -198,14 +197,16 @@ export default function TradingChart() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/5 font-mono text-xs">
         {/* Risk / Leverage Slider Block */}
         <div className="flex flex-col justify-center bg-zinc-900/50 border border-white/5 rounded-lg p-3">
-          <div className="flex justify-between text-zinc-400 mb-2">
+          <div className="flex justify-between text-zinc-400 mb-2" id="leverage-label">
             <span>RISK ENGINE LEVERAGE</span>
             <span className="text-white font-bold">{leverage}x</span>
           </div>
           <input 
             type="range" min="1" max="100" value={leverage} 
+            aria-labelledby="leverage-label"
+            aria-valuetext={`${leverage}x leverage`}
             onChange={(e) => setLeverage(Number(e.target.value))}
-            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer"
+            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           />
         </div>
 
@@ -214,24 +215,27 @@ export default function TradingChart() {
           {!position ? (
             <>
               <button
+                type="button"
                 onClick={() => setPosition({ entry: currentPrice, type: "LONG" })}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 rounded-lg py-3 transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 rounded-lg py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
-                <TrendingUp size={14} /> INSTANT LONG
+                <TrendingUp size={14} aria-hidden="true" /> INSTANT LONG
               </button>
               <button
+                type="button"
                 onClick={() => setPosition({ entry: currentPrice, type: "SHORT" })}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold border border-rose-500/20 rounded-lg py-3 transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold border border-rose-500/20 rounded-lg py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
               >
-                <TrendingDown size={14} /> INSTANT SHORT
+                <TrendingDown size={14} aria-hidden="true" /> INSTANT SHORT
               </button>
             </>
           ) : (
             <button
+              type="button"
               onClick={closePosition}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold border border-white/20 rounded-lg py-3 transition-all animate-in fade-in zoom-in duration-200"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold border border-white/20 rounded-lg py-3 transition-all animate-in fade-in zoom-in duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
-              <RefreshCw size={14} className={isPlaying ? "animate-spin-slow" : ""} /> 
+              <RefreshCw size={14} className={isPlaying ? "animate-spin-slow" : ""} aria-hidden="true" />
               CLOSE POSITION (EXIT AT ${currentPrice.toFixed(2)})
             </button>
           )}
