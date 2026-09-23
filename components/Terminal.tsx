@@ -37,14 +37,18 @@ export default function Terminal() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm">
+    <div
+      role="region"
+      aria-label="System Console"
+      className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm"
+    >
       {/* Terminal Header */}
       <div className="bg-zinc-900/50 px-4 py-2 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TerminalIcon size={14} className="text-zinc-500" />
+          <TerminalIcon size={14} className="text-zinc-500" aria-hidden="true" />
           <span className="text-zinc-400 text-xs uppercase tracking-widest">System_Console</span>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" aria-hidden="true">
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
@@ -54,6 +58,8 @@ export default function Terminal() {
       {/* Terminal Body */}
       <div 
         ref={scrollRef}
+        aria-live="polite"
+        aria-atomic="false"
         className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
       >
         {history.map((line, i) => (
@@ -61,13 +67,19 @@ export default function Terminal() {
             {line}
           </div>
         ))}
-        <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+        <form onSubmit={handleCommand} className="flex items-center mt-2">
+          <ChevronRight size={14} className="text-emerald-500 mr-1 shrink-0" aria-hidden="true" />
+          <label htmlFor="terminal-input" className="sr-only">
+            Terminal command input
+          </label>
           <input
+            id="terminal-input"
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="Terminal command input"
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded px-1"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            placeholder="Type 'help'..."
           />
         </form>
       </div>

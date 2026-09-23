@@ -9,27 +9,24 @@ interface PriceData {
 }
 
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
+  const maxDataPoints = 40;
+
+  const [data, setData] = useState<PriceData[]>(() => {
+    const initialData: PriceData[] = [];
+    let basePrice = 65000;
+    // Use deterministic offset timestamps to align with hydration memory rule
+    const now = 1700000000000;
+    for (let i = maxDataPoints; i > 0; i--) {
+      basePrice += 10;
+      initialData.push({ time: now - i * 1000, price: basePrice });
+    }
+    return initialData;
+  });
+
+  const currentPriceRef = useRef<number>(data[data.length - 1]?.price ?? 65000);
   const [isPlaying, setIsPlaying] = useState(true);
   const [leverage, setLeverage] = useState(20);
   const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
-  const maxDataPoints = 40;
-
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
-    const initialData: PriceData[] = [];
-    let basePrice = 65000;
-    for (let i = maxDataPoints; i > 0; i--) {
-      basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
-    }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -51,23 +48,6 @@ export default function TradingChart() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
-    const currentPrice = data[data.length - 1].price;
-    const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
-    const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
-  }, [data, position, leverage]);
-
-  const closePosition = () => {
-    setPosition(null);
-    setPnl(0);
-  };
-
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
 
   const prices = data.map((d) => d.price);
@@ -76,6 +56,15 @@ export default function TradingChart() {
   const currentPrice = prices[prices.length - 1];
   const previousPrice = prices[prices.length - 2] || currentPrice;
   const isPriceUp = currentPrice >= previousPrice;
+
+  // 2. Real-Time Risk & PnL Calculation (Derived state during render)
+  const pnl = position
+    ? ((currentPrice - position.entry) / position.entry) * leverage * 100 * (position.type === "LONG" ? 1 : -1)
+    : 0;
+
+  const closePosition = () => {
+    setPosition(null);
+  };
 
   // 3. Mathematical Coordinate Mapping System
   const svgWidth = 600;
