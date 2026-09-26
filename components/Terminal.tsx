@@ -54,6 +54,8 @@ export default function Terminal() {
       {/* Terminal Body */}
       <div 
         ref={scrollRef}
+        role="log"
+        aria-live="polite"
         className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
       >
         {history.map((line, i) => (
@@ -62,10 +64,11 @@ export default function Terminal() {
           </div>
         ))}
         <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+          <ChevronRight size={14} className="text-emerald-500 mr-1" aria-hidden="true" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="System console command input"
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 focus-visible:outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
