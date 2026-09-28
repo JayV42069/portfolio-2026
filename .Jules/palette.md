@@ -1,0 +1,3 @@
+## 2026-09-28 - Icon-only Trading Controls & Ticker State Accessibility
+**Learning:** Icon-only interactive controls (Play/Pause, Refresh) in live chart and simulation components lacked accessible names (`aria-label`) and visual tooltips (`title`), hiding their controls from screen reader users and keyboard focus indicators. Additionally, state derivations like PnL belong in render-time computation (`useMemo`) rather than `useEffect` state syncing to keep rendering responsive.
+**Action:** Always pair icon-only controls with `aria-label`, `title`, and `focus-visible:ring-2` focus rings, and derive calculation state during render.
