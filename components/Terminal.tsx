@@ -54,6 +54,9 @@ export default function Terminal() {
       {/* Terminal Body */}
       <div 
         ref={scrollRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Console logs"
         className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
       >
         {history.map((line, i) => (
@@ -65,7 +68,9 @@ export default function Terminal() {
           <ChevronRight size={14} className="text-emerald-500 mr-1" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="Terminal command input"
+            placeholder="Type 'help'..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 placeholder:text-zinc-700"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
