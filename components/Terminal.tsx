@@ -62,10 +62,12 @@ export default function Terminal() {
           </div>
         ))}
         <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+          <ChevronRight size={14} className="text-emerald-500 mr-1" aria-hidden="true" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="Terminal command input"
+            placeholder="Type 'help' for options..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 placeholder-zinc-700 focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded px-1"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />

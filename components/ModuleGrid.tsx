@@ -67,31 +67,46 @@ export default function ModuleGrid() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Module Picker - NOW INTERACTIVE */}
-        <div className="flex md:flex-col gap-2">
-          {AVAILABLE_MODULES.map((mod) => (
-            <button
-              key={mod.id}
-              onClick={() => setActiveTool(mod.id)}
-              className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
-                activeTool === mod.id 
-                ? "bg-white/10 border-white/20 ring-1 ring-white/10" 
-                : "bg-white/5 border-transparent hover:border-white/10"
-              }`}
-            >
-              <div className={mod.color}>{mod.icon}</div>
-              <span className="text-[10px] text-zinc-400 uppercase font-bold">{mod.name}</span>
-            </button>
-          ))}
+        <div className="flex md:flex-col gap-2" role="group" aria-label="Select module tool">
+          {AVAILABLE_MODULES.map((mod) => {
+            const isSelected = activeTool === mod.id;
+            return (
+              <button
+                key={mod.id}
+                onClick={() => setActiveTool(mod.id)}
+                aria-pressed={isSelected}
+                aria-label={`Select tool: ${mod.name} (Mass: ${mod.mass}kg, Power: ${mod.power}kW)`}
+                className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  isSelected
+                  ? "bg-white/10 border-white/20 ring-1 ring-white/10"
+                  : "bg-white/5 border-transparent hover:border-white/10"
+                }`}
+              >
+                <div className={mod.color}>{mod.icon}</div>
+                <span className="text-[10px] text-zinc-400 uppercase font-bold">{mod.name}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="md:col-span-3 grid grid-cols-4 gap-2 bg-black/50 p-4 rounded-xl border border-white/5">
+        <div
+          className="md:col-span-3 grid grid-cols-4 gap-2 bg-black/50 p-4 rounded-xl border border-white/5"
+          role="group"
+          aria-label="Module grid sockets"
+        >
           {grid.map((slot, i) => {
             const activeMod = AVAILABLE_MODULES.find((m) => m.id === slot);
+            const currentToolMod = AVAILABLE_MODULES.find((m) => m.id === activeTool);
+            const slotLabel = activeMod
+              ? `Socket ${i + 1}: ${activeMod.name} installed. Click to remove.`
+              : `Socket ${i + 1}: Empty. Click to install ${currentToolMod?.name ?? "module"}.`;
+
             return (
               <button
                 key={i}
                 onClick={() => handleGridClick(i)}
-                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 ${
+                aria-label={slotLabel}
+                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   activeMod 
                     ? `bg-emerald-500/10 border-emerald-500/50 ${activeMod.color}` 
                     : "bg-zinc-900/30 border-white/5 hover:border-white/20 text-zinc-800"
