@@ -72,7 +72,9 @@ export default function ModuleGrid() {
             <button
               key={mod.id}
               onClick={() => setActiveTool(mod.id)}
-              className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
+              aria-label={`Select ${mod.name} module tool`}
+              aria-pressed={activeTool === mod.id}
+              className={`flex-1 p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 activeTool === mod.id 
                 ? "bg-white/10 border-white/20 ring-1 ring-white/10" 
                 : "bg-white/5 border-transparent hover:border-white/10"
@@ -91,7 +93,8 @@ export default function ModuleGrid() {
               <button
                 key={i}
                 onClick={() => handleGridClick(i)}
-                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 ${
+                aria-label={`Grid slot ${i + 1}: ${activeMod ? activeMod.name : "Empty"}`}
+                className={`aspect-square rounded-lg border flex items-center justify-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   activeMod 
                     ? `bg-emerald-500/10 border-emerald-500/50 ${activeMod.color}` 
                     : "bg-zinc-900/30 border-white/5 hover:border-white/20 text-zinc-800"
