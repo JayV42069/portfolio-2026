@@ -1,0 +1,3 @@
+## 2026-10-12 - Real-Time Control Accessibility and React 19 State Derivation
+**Learning:** High-frequency interactive controls (like live chart toggles and leverage sliders) need explicit ARIA labels and focus rings, while avoiding synchronous `setState` in `useEffect` or reading refs during render callbacks. Baseline mock data should be static/deterministic outside component scope to ensure SSR hydration safety.
+**Action:** When adding accessible attributes to interactive canvas/chart widgets, derive calculated metrics on render and declare initial deterministic data outside component render scope.
