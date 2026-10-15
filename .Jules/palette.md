@@ -1,0 +1,3 @@
+## 2025-05-18 - SSR Deterministic State & Icon Button Accessibility
+**Learning:** Initializing interactive UI component state with nondeterministic functions like `Math.random()` or `Date.now()` during SSR causes React hydration mismatch errors in Next.js. Combining deterministic state initialization with explicit `aria-label`s and `focus-visible` styles ensures both clean SSR hydration and full screen-reader/keyboard accessibility.
+**Action:** Always use deterministic baselines for SSR client component initial state, and complement icon-only buttons with descriptive `aria-label` and `focus-visible:ring-2` focus states.
