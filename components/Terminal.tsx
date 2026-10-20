@@ -62,10 +62,19 @@ export default function Terminal() {
           </div>
         ))}
         <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+          <label htmlFor="terminal-input" className="sr-only">
+            Terminal command prompt
+          </label>
+          <ChevronRight size={14} className="text-emerald-500 mr-1 shrink-0" aria-hidden="true" />
           <input
+            id="terminal-input"
+            type="text"
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="Terminal command prompt"
+            placeholder="Type 'help'..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 focus-visible:ring-0 placeholder:text-zinc-600"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
