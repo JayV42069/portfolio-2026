@@ -8,28 +8,25 @@ interface PriceData {
   price: number;
 }
 
+const maxDataPoints = 40;
+
+function generateInitialData(): PriceData[] {
+  const initialData: PriceData[] = [];
+  const basePrice = 65000;
+  const now = 1700000000000; // Baseline timestamp for SSR consistency
+  for (let i = maxDataPoints; i > 0; i--) {
+    initialData.push({ time: now - i * 1000, price: basePrice });
+  }
+  return initialData;
+}
+
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
+  const [data, setData] = useState<PriceData[]>(generateInitialData);
   const [isPlaying, setIsPlaying] = useState(true);
   const [leverage, setLeverage] = useState(20);
   const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
-  const maxDataPoints = 40;
 
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
-    const initialData: PriceData[] = [];
-    let basePrice = 65000;
-    for (let i = maxDataPoints; i > 0; i--) {
-      basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
-    }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
+  const currentPriceRef = useRef<number>(65000);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -51,31 +48,27 @@ export default function TradingChart() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
-    const currentPrice = data[data.length - 1].price;
+  const prices = data.map((d) => d.price);
+  const currentPrice = prices.length > 0 ? prices[prices.length - 1] : 65000;
+  const previousPrice = prices.length > 1 ? prices[prices.length - 2] : currentPrice;
+  const isPriceUp = currentPrice >= previousPrice;
+
+  // Derive PnL on render instead of inside useEffect to prevent cascading renders
+  const pnl = (() => {
+    if (!position || data.length === 0) return 0;
     const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
     const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
-  }, [data, position, leverage]);
+    return position.type === "LONG" ? calculatedPnl : -calculatedPnl;
+  })();
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
 
-  const prices = data.map((d) => d.price);
   const minPrice = Math.min(...prices) * 0.9995;
   const maxPrice = Math.max(...prices) * 1.0005;
-  const currentPrice = prices[prices.length - 1];
-  const previousPrice = prices[prices.length - 2] || currentPrice;
-  const isPriceUp = currentPrice >= previousPrice;
 
   // 3. Mathematical Coordinate Mapping System
   const svgWidth = 600;
@@ -113,7 +106,9 @@ export default function TradingChart() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label={isPlaying ? "Pause price feed" : "Play price feed"}
+            title={isPlaying ? "Pause price feed" : "Play price feed"}
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} />}
           </button>
@@ -122,7 +117,9 @@ export default function TradingChart() {
               setPosition(null);
               currentPriceRef.current = 65000;
             }}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label="Reset simulation"
+            title="Reset simulation"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
           >
             <RefreshCw size={16} />
           </button>
@@ -205,7 +202,8 @@ export default function TradingChart() {
           <input 
             type="range" min="1" max="100" value={leverage} 
             onChange={(e) => setLeverage(Number(e.target.value))}
-            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer"
+            aria-label="Risk engine leverage multiplier"
+            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none"
           />
         </div>
 
