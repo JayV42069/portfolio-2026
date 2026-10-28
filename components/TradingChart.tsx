@@ -8,29 +8,30 @@ interface PriceData {
   price: number;
 }
 
+const INITIAL_DATA: PriceData[] = Array.from({ length: 40 }, (_, i) => ({
+  time: (i - 40) * 1000,
+  price: 65000 + Math.sin(i / 2) * 50,
+}));
+
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
+  const [data, setData] = useState<PriceData[]>(INITIAL_DATA);
   const [isPlaying, setIsPlaying] = useState(true);
   const [leverage, setLeverage] = useState(20);
   const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
+
+  const currentPriceRef = useRef<number>(INITIAL_DATA[INITIAL_DATA.length - 1].price);
   const maxDataPoints = 40;
 
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
-    const initialData: PriceData[] = [];
-    let basePrice = 65000;
-    for (let i = maxDataPoints; i > 0; i--) {
-      basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
-    }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
+  // Derive PnL directly during render
+  const pnl = (() => {
+    if (!position || data.length === 0) return 0;
+    const currentPrice = data[data.length - 1].price;
+    const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
+    const calculatedPnl = priceDiffPercentage * leverage * 100;
+    return position.type === "LONG" ? calculatedPnl : -calculatedPnl;
+  })();
 
+  // Simulate High-Frequency Price Feed
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -51,21 +52,8 @@ export default function TradingChart() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
-    const currentPrice = data[data.length - 1].price;
-    const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
-    const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
-  }, [data, position, leverage]);
-
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -113,7 +101,9 @@ export default function TradingChart() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label={isPlaying ? "Pause price feed" : "Play price feed"}
+            title={isPlaying ? "Pause price feed" : "Play price feed"}
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:ring-2 focus-visible:ring-white/20"
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} />}
           </button>
@@ -122,7 +112,9 @@ export default function TradingChart() {
               setPosition(null);
               currentPriceRef.current = 65000;
             }}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label="Reset chart and position"
+            title="Reset chart and position"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:ring-2 focus-visible:ring-white/20"
           >
             <RefreshCw size={16} />
           </button>
@@ -205,6 +197,7 @@ export default function TradingChart() {
           <input 
             type="range" min="1" max="100" value={leverage} 
             onChange={(e) => setLeverage(Number(e.target.value))}
+            aria-label="Risk engine leverage"
             className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer"
           />
         </div>
