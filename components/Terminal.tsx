@@ -65,7 +65,10 @@ export default function Terminal() {
           <ChevronRight size={14} className="text-emerald-500 mr-1" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            type="text"
+            aria-label="System console command input"
+            placeholder="Type 'help'..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/50 rounded px-1"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
