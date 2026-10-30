@@ -1,0 +1,3 @@
+## 2026-10-30 - Accessible Grid Sockets & Terminal Focus
+**Learning:** Icon-only interactive grid slots (such as component sockets) and terminal emulation windows lack context for screen reader users and keyboard navigation. Using `aria-pressed` on tool buttons and dynamic `aria-label`s on grid slots (e.g., "Slot X: [Item] installed") coupled with `aria-live="polite"` output logs and container click-to-focus behavior provides seamless, accessible interaction for both assistive technology and pointer users.
+**Action:** Always provide descriptive dynamic ARIA labels on grid sockets and add click-to-focus event handlers on custom terminal emulator containers.

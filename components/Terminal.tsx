@@ -16,6 +16,7 @@ export default function Terminal() {
   const [history, setHistory] = useState<string[]>(["Welcome to Jay-Dee OS v2.0.0", "Type 'help' to begin..."]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -36,15 +37,22 @@ export default function Terminal() {
     setInput("");
   };
 
+  const handleTerminalClick = () => {
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm">
+    <div
+      onClick={handleTerminalClick}
+      className="w-full max-w-3xl mx-auto bg-black border border-white/10 rounded-lg overflow-hidden shadow-2xl font-mono text-sm cursor-text"
+    >
       {/* Terminal Header */}
       <div className="bg-zinc-900/50 px-4 py-2 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <TerminalIcon size={14} className="text-zinc-500" />
           <span className="text-zinc-400 text-xs uppercase tracking-widest">System_Console</span>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" aria-hidden="true">
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
           <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
@@ -55,17 +63,22 @@ export default function Terminal() {
       <div 
         ref={scrollRef}
         className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
+        aria-live="polite"
+        aria-label="Terminal output log"
       >
         {history.map((line, i) => (
           <div key={i} className={line.startsWith(">") ? "text-emerald-500" : "text-zinc-300"}>
             {line}
           </div>
         ))}
-        <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+        <form onSubmit={handleCommand} className="flex items-center pt-1">
+          <ChevronRight size={14} className="text-emerald-500 mr-1 shrink-0" aria-hidden="true" />
           <input
+            ref={inputRef}
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="System console command input"
+            placeholder="Type 'help', 'skills', 'projects'..."
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 placeholder-zinc-700 focus-visible:ring-0"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
