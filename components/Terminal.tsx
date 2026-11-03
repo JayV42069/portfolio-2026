@@ -16,6 +16,7 @@ export default function Terminal() {
   const [history, setHistory] = useState<string[]>(["Welcome to Jay-Dee OS v2.0.0", "Type 'help' to begin..."]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -54,18 +55,33 @@ export default function Terminal() {
       {/* Terminal Body */}
       <div 
         ref={scrollRef}
-        className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
+        onClick={() => inputRef.current?.focus()}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-label="Interactive terminal output"
+        className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar cursor-text"
       >
         {history.map((line, i) => (
           <div key={i} className={line.startsWith(">") ? "text-emerald-500" : "text-zinc-300"}>
             {line}
           </div>
         ))}
-        <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+        <form onSubmit={handleCommand} className="flex items-center pt-1">
+          <label htmlFor="terminal-input" className="sr-only">
+            Terminal command prompt
+          </label>
+          <ChevronRight size={14} className="text-emerald-500 mr-1 shrink-0" aria-hidden="true" />
           <input
-            autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            id="terminal-input"
+            ref={inputRef}
+            aria-label="Command prompt"
+            placeholder="Type a command (e.g. 'help')..."
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 placeholder:text-zinc-600 focus-visible:outline-none"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
