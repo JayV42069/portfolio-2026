@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Play, Pause, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PriceData {
@@ -9,38 +9,33 @@ interface PriceData {
 }
 
 export default function TradingChart() {
-  const [data, setData] = useState<PriceData[]>([]);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [leverage, setLeverage] = useState(20);
-  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
-  const [pnl, setPnl] = useState<number>(0);
-  
-  const currentPriceRef = useRef<number>(65000);
   const maxDataPoints = 40;
 
-  // 1. Initialize & Simulate High-Frequency Price Feed
-  useEffect(() => {
-    // Generate initial baseline data
+  // Deterministic baseline data generation to prevent hydration mismatches and cascading renders
+  const [data, setData] = useState<PriceData[]>(() => {
     const initialData: PriceData[] = [];
     let basePrice = 65000;
     for (let i = maxDataPoints; i > 0; i--) {
-      basePrice += (Math.random() - 0.5) * 150;
-      initialData.push({ time: Date.now() - i * 1000, price: basePrice });
+      basePrice += Math.sin(i) * 35;
+      initialData.push({ time: 1700000000000 - i * 1000, price: Number(basePrice.toFixed(2)) });
     }
-    currentPriceRef.current = basePrice;
-    setData(initialData);
-  }, []);
+    return initialData;
+  });
+
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [leverage, setLeverage] = useState(20);
+  const [position, setPosition] = useState<{ entry: number; type: "LONG" | "SHORT" } | null>(null);
 
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
       setData((prev) => {
+        const lastPrice = prev.length > 0 ? prev[prev.length - 1].price : 65000;
         // High-frequency tick simulation
         const volatility = 120; 
         const change = (Math.random() - 0.49) * volatility; // Slight upward bias
-        const nextPrice = Math.max(1000, currentPriceRef.current + change);
-        currentPriceRef.current = nextPrice;
+        const nextPrice = Math.max(1000, lastPrice + change);
 
         const newData = [...prev, { time: Date.now(), price: nextPrice }];
         if (newData.length > maxDataPoints) newData.shift();
@@ -51,21 +46,15 @@ export default function TradingChart() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // 2. Real-Time Risk & PnL Calculation
-  useEffect(() => {
-    if (!position || data.length === 0) {
-      setPnl(0);
-      return;
-    }
-    const currentPrice = data[data.length - 1].price;
-    const priceDiffPercentage = (currentPrice - position.entry) / position.entry;
-    const calculatedPnl = priceDiffPercentage * leverage * 100;
-    setPnl(position.type === "LONG" ? calculatedPnl : -calculatedPnl);
-  }, [data, position, leverage]);
+  const currentPrice = data.length > 0 ? data[data.length - 1].price : 65000;
+
+  // 2. Real-Time Risk & PnL Calculation (derived during render)
+  const pnl = position && data.length > 0
+    ? ((currentPrice - position.entry) / position.entry) * leverage * 100 * (position.type === "LONG" ? 1 : -1)
+    : 0;
 
   const closePosition = () => {
     setPosition(null);
-    setPnl(0);
   };
 
   if (data.length === 0) return <div className="text-white">Initializing Engine...</div>;
@@ -73,7 +62,6 @@ export default function TradingChart() {
   const prices = data.map((d) => d.price);
   const minPrice = Math.min(...prices) * 0.9995;
   const maxPrice = Math.max(...prices) * 1.0005;
-  const currentPrice = prices[prices.length - 1];
   const previousPrice = prices[prices.length - 2] || currentPrice;
   const isPriceUp = currentPrice >= previousPrice;
 
@@ -112,17 +100,31 @@ export default function TradingChart() {
         {/* Real-Time Interaction Desk */}
         <div className="flex items-center gap-3">
           <button 
+            type="button"
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label={isPlaying ? "Pause price simulation" : "Resume price simulation"}
+            title={isPlaying ? "Pause price simulation" : "Resume price simulation"}
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} />}
           </button>
           <button 
+            type="button"
             onClick={() => {
               setPosition(null);
-              currentPriceRef.current = 65000;
+              setData(() => {
+                const initialData: PriceData[] = [];
+                let basePrice = 65000;
+                for (let i = maxDataPoints; i > 0; i--) {
+                  basePrice += Math.sin(i) * 35;
+                  initialData.push({ time: Date.now() - i * 1000, price: Number(basePrice.toFixed(2)) });
+                }
+                return initialData;
+              });
             }}
-            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all"
+            aria-label="Reset simulation position and price"
+            title="Reset simulation position and price"
+            className="p-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-zinc-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             <RefreshCw size={16} />
           </button>
@@ -205,7 +207,8 @@ export default function TradingChart() {
           <input 
             type="range" min="1" max="100" value={leverage} 
             onChange={(e) => setLeverage(Number(e.target.value))}
-            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer"
+            aria-label="Risk engine leverage multiplier"
+            className="w-full accent-white bg-zinc-800 rounded-lg appearance-none h-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />
         </div>
 
