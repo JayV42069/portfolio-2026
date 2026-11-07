@@ -54,7 +54,10 @@ export default function Terminal() {
       {/* Terminal Body */}
       <div 
         ref={scrollRef}
-        className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar"
+        role="log"
+        aria-live="polite"
+        aria-label="Terminal output log"
+        className="h-64 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm space-y-1 custom-scrollbar focus-within:ring-1 focus-within:ring-emerald-500/30 rounded-b-lg"
       >
         {history.map((line, i) => (
           <div key={i} className={line.startsWith(">") ? "text-emerald-500" : "text-zinc-300"}>
@@ -62,10 +65,14 @@ export default function Terminal() {
           </div>
         ))}
         <form onSubmit={handleCommand} className="flex items-center">
-          <ChevronRight size={14} className="text-emerald-500 mr-1" />
+          <ChevronRight size={14} className="text-emerald-500 mr-1 shrink-0" aria-hidden="true" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500"
+            aria-label="Terminal command input"
+            placeholder="Type 'help'..."
+            spellCheck={false}
+            autoComplete="off"
+            className="flex-1 bg-transparent border-none outline-none text-emerald-400 caret-emerald-500 placeholder:text-zinc-700"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
